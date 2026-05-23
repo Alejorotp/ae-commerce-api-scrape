@@ -1,0 +1,13 @@
+fastapi==0.111.0
+uvicorn==0.29.0
+sqlalchemy[asyncio]==2.0.30
+asyncpg==0.29.0
+alembic==1.13.1
+playwright==1.44.0
+playwright-stealth==1.0.6
+aioboto3==12.4.0
+apscheduler==3.10.4
+colorthief==0.2.1
+beautifulsoup4==4.12.3
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
