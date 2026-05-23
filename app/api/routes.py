@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -72,13 +72,10 @@ async def get_category_colors(category_name: str, db: AsyncSession = Depends(get
     return [r for r in result.scalars().all() if r]
 
 @router.post("/scrape")
-async def trigger_scrape(x_scrape_password: str = Header(...)):
+async def trigger_scrape(background_tasks: BackgroundTasks, x_scrape_password: str = Header(...)):
     if x_scrape_password != settings.scrape_password:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    # Trigger as background task or wait for it.
-    # In a real app we might use BackgroundTasks from fastapi
-    # For now, we await it directly as requested, but warning: it might timeout the request if it takes too long.
-    # Let's import BackgroundTasks and use it to be safe.
-    return {"message": "Scrape endpoint called successfully. The actual scraping will run as a background task if requested, but for now we are running it via the scheduler mostly. Use BackgroundTasks for real async triggering."}
+    background_tasks.add_task(run_scraper)
+    return {"message": "Scraping process initiated in the background."}
 

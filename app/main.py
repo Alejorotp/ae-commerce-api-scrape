@@ -24,11 +24,4 @@ app = FastAPI(title="H&M Colombia Scraper API", lifespan=lifespan)
 
 app.include_router(api_router, prefix="/api")
 
-# We override the trigger_scrape to correctly use BackgroundTasks here instead of in routes, or just modify routes.
-@app.post("/api/scrape")
-async def trigger_scrape(background_tasks: BackgroundTasks, x_scrape_password: str = Header(...)):
-    if x_scrape_password != settings.scrape_password:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    background_tasks.add_task(run_scraper)
-    return {"message": "Scraping process initiated in the background."}
+
