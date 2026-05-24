@@ -63,26 +63,46 @@ def classify_colorimetry(color_str: str) -> str:
 
 async def extract_and_store_garments(page, url: str):
     logger.info(f"Navigating to {url}")
-    await page.goto(url, wait_until="domcontentloaded")
     
-    # Extract the __NEXT_DATA__ json
-    script_content = await page.evaluate("() => { const el = document.getElementById('__NEXT_DATA__'); return el ? el.innerText : null; }")
-    if not script_content:
-        logger.error("Could not find __NEXT_DATA__ on page.")
-        return
+    products_data = None
+    
+    async def handle_response(response):
+        nonlocal products_data
+        try:
+            if "graphql" in response.url and ("ClientManyProductsQuery" in response.url or "ClientProductGalleryQuery" in response.url):
+                if response.status == 200:
+                    data = await response.json()
+                    if data and 'data' in data and data['data'] and 'search' in data['data']:
+                        edges = data['data']['search']['products']['edges']
+                        if edges:
+                            products_data = edges
+        except Exception:
+            pass
 
-    data = json.loads(script_content)
+    page.on("response", handle_response)
     
-    # Depending on whether it's a search page or product page, the structure changes.
-    # We are scraping search pages (ver-todo)
-    try:
-        products = data['props']['pageProps']['data']['search']['products']['edges']
-    except KeyError as e:
-        logger.error(f"JSON structure mismatch: {e}")
+    await page.goto(url, wait_until="domcontentloaded")
+    # Wait for the client-side React app to fetch data if it's page > 0
+    await page.wait_for_timeout(3500)
+    
+    page.remove_listener("response", handle_response)
+    
+    # Fallback to __NEXT_DATA__ if no GraphQL API fired (usually on page 0)
+    if not products_data:
+        script_content = await page.evaluate("() => { const el = document.getElementById('__NEXT_DATA__'); return el ? el.innerText : null; }")
+        if script_content:
+            data = json.loads(script_content)
+            try:
+                products_data = data['props']['pageProps']['data']['search']['products']['edges']
+            except KeyError as e:
+                logger.error(f"JSON structure mismatch: {e}")
+
+    if not products_data:
+        logger.error("Could not find __NEXT_DATA__ or intercept products on page.")
         return
 
     async with async_session_maker() as session:
-        for edge in products:
+        for edge in products_data:
             node = edge['node']
             gtin = node.get('gtin', str(uuid.uuid4()))
             name = node.get('name', 'Unknown')
