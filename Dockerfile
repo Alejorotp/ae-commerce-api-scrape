@@ -30,8 +30,12 @@ COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache /wheels/*
 
-# Install system dependencies needed by Playwright (must be root)
-RUN playwright install-deps
+# Install system dependencies needed by Playwright and OpenCV (must be root)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && playwright install-deps
 
 # Create appuser
 RUN adduser --disabled-password --gecos '' appuser

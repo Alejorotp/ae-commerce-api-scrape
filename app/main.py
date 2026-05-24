@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, BackgroundTasks, Header, HTTPException
 from app.api.routes import router as api_router
+from app.api.colorimetry import router as colorimetry_router
 from app.scheduler import scheduler, setup_scheduler
 from app.services.scraper import run_scraper
 from app.config import settings
@@ -23,5 +24,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="H&M Colombia Scraper API", lifespan=lifespan)
 
 app.include_router(api_router, prefix="/api")
+app.include_router(colorimetry_router, prefix="/api")
 
 
