@@ -25,7 +25,7 @@ async def get_garments(
     db: AsyncSession = Depends(get_db)
 ):
     stmt = select(Garment)
-    
+    # force this
     if name:
         stmt = stmt.where(func.similarity(Garment.name, name) > 0.2)
         stmt = stmt.order_by(func.similarity(Garment.name, name).desc())
@@ -70,6 +70,7 @@ async def get_garments(
         pages=pages
     )
 
+
 @router.get("/garments/{garment_id}", response_model=GarmentResponse)
 async def get_garment(garment_id: str, db: AsyncSession = Depends(get_db)):
     stmt = select(Garment).where(Garment.id == garment_id)
@@ -87,7 +88,7 @@ async def get_garment(garment_id: str, db: AsyncSession = Depends(get_db)):
     resp.images = signed_images
     
     return resp
-
+  
 @router.get("/categories", response_model=List[str])
 async def get_categories(db: AsyncSession = Depends(get_db)):
     stmt = select(Garment.category).distinct()
@@ -118,3 +119,4 @@ async def get_image_url(url: str = Query(..., description="The full S3 image URL
     if not presigned_url:
         raise HTTPException(status_code=500, detail="Failed to generate URL")
     return {"url": presigned_url}
+

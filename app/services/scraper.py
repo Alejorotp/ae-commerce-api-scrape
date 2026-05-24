@@ -188,3 +188,4 @@ async def run_scraper():
                 
         await browser.close()
     logger.info("Scraper finished.")
+ 
