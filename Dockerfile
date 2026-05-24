@@ -46,12 +46,12 @@ COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache /wheels/*
 
-# Install Playwright browser binary
-RUN playwright install chromium
-
 # Create appuser
 RUN adduser --disabled-password --gecos '' appuser
 USER appuser
+
+# Install Playwright browser binary as appuser
+RUN playwright install chromium
 
 COPY --chown=appuser:appuser . .
 
