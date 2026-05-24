@@ -79,10 +79,14 @@ async def trigger_scrape(background_tasks: BackgroundTasks, x_scrape_password: s
     
     background_tasks.add_task(run_scraper)
     return {"message": "Scraping process initiated in the background."}
-@router.get("/image-url/{image_key}")
-async def get_image_url(image_key: str):
-    """Generate a presigned URL for an image."""
-    url = await get_presigned_url(image_key)
-    if not url:
+    
+@router.get("/image-url")
+async def get_image_url(url: str = Query(..., description="The full S3 image URL from the database")):
+    """Generate a presigned URL from a full image URL."""
+    # Extract the key from the URL (the last part after the last slash)
+    image_key = url.split("/")[-1]
+    
+    presigned_url = await get_presigned_url(image_key)
+    if not presigned_url:
         raise HTTPException(status_code=500, detail="Failed to generate URL")
-    return {"url": url}
+    return {"url": presigned_url}
