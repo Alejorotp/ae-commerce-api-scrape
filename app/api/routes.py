@@ -30,11 +30,11 @@ async def get_garments(
     stmt = select(Garment)
     
     if name:
-        # Simple stemming to catch variations like "pantalona" vs "pantalon"
-        search_term = name[:-1] if name[-1].lower() in ['a', 'o', 'e', 's'] and len(name) > 4 else name
-        stmt = stmt.where(Garment.name.ilike(f"%{search_term}%"))
+        stmt = stmt.where(func.similarity(Garment.name, name) > 0.2)
+        stmt = stmt.order_by(func.similarity(Garment.name, name).desc())
     if category:
-        stmt = stmt.where(Garment.category == category)
+        stmt = stmt.where(func.similarity(Garment.category, category) > 0.2)
+        stmt = stmt.order_by(func.similarity(Garment.category, category).desc())
     if gender:
         stmt = stmt.where(Garment.gender == gender)
     if color:
