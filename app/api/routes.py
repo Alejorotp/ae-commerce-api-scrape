@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Header, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, BackgroundTasks, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
 from typing import List, Optional
+import json
 
 from app.database import get_db
 from app.models import Garment
@@ -10,6 +11,8 @@ from app.schemas import GarmentResponse, PaginatedGarments, ColorimetryEnum
 from app.config import settings
 from app.services.scraper import run_scraper
 from app.services.storage import get_presigned_url
+from app.services.cloudinary_service import upload_image
+from app.services.replicate_service import generate_tryon_flux, generate_tryon_nano
 
 router = APIRouter()
 
@@ -120,3 +123,86 @@ async def get_image_url(url: str = Query(..., description="The full S3 image URL
         raise HTTPException(status_code=500, detail="Failed to generate URL")
     return {"url": presigned_url}
 
+
+
+@router.post("/generate")
+async def generate_outfits(
+    person_image: UploadFile = File(...),
+    product_urls: str = Form(...)
+):
+    print("NEW ENDPOINT LOADED")
+    parsed_urls = json.loads(product_urls)
+    if not isinstance(parsed_urls, list):
+        return {
+        "error": "product_urls must be a list"
+        }
+
+    person_image_url = upload_image(person_image.file)
+
+    generated_images = []
+
+    for product_url in parsed_urls:
+
+        try:
+            print(f"Generating for: {product_url}")
+            result_url = generate_tryon_nano(
+            person_image_url,
+            product_url
+            )
+
+            generated_images.append(result_url)
+
+        except Exception as e:
+            generated_images.append({
+            "product": product_url,
+            "error": str(e)
+            })
+
+    return {
+        "results": generated_images
+    }
+
+@router.post("/generate-single")
+async def generate_single_outfit(
+    person_image_url: str = Form(...),
+    product_image: UploadFile = File(...)
+):
+
+    try:
+        product_image_url = upload_image(product_image.file)
+        
+        result_url = generate_tryon_nano(
+            person_image_url,
+            product_image_url
+        )
+
+        return {
+            "result": result_url
+        }
+
+    except Exception as e:
+
+        return {
+            "error": str(e)
+        }
+        
+@router.post("/upload-person")
+async def upload_person_image(
+    person_image: UploadFile = File(...)
+):
+
+    try:
+
+        person_image_url = upload_image(
+            person_image.file
+        )
+
+        return {
+            "person_image_url": person_image_url
+        }
+
+    except Exception as e:
+
+        return {
+            "error": str(e)
+        }

@@ -16,5 +16,13 @@ class Settings(BaseSettings):
     scrape_password: str = Field(..., env='SCRAPE_PASSWORD')
     
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
+    
+    # Cloudinary
+    cloudinary_cloud_name: str = Field(..., env='CLOUDINARY_CLOUD_NAME')
+    cloudinary_api_key: str = Field(..., env='CLOUDINARY_API_KEY')
+    cloudinary_api_secret: str = Field(..., env='CLOUDINARY_API_SECRET')
+
+    # Replicate
+    replicate_api_token: str = Field(..., env='REPLICATE_API_TOKEN')
 
 settings = Settings()

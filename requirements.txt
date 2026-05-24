@@ -14,3 +14,5 @@ python-dotenv==1.0.1
 python-multipart==0.0.9
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
+cloudinary==1.44.1
+replicate==1.0.7
