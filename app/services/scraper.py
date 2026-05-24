@@ -18,10 +18,15 @@ import io
 
 logger = logging.getLogger(__name__)
 
-TARGET_URLS = [
-    "https://co.hm.com/mujer/ver-todo?category-1=mujer&category-2=ver-todo&fuzzy=0&operator=and&facets=category-1%2Ccategory-2%2Cfuzzy%2Coperator&sort=score_desc&page=0",
-    "https://co.hm.com/hombre/ver-todo?category-1=hombre&category-2=ver-todo&fuzzy=0&operator=and&facets=category-1%2Ccategory-2%2Cfuzzy%2Coperator&sort=score_desc&page=0"
-]
+def get_target_urls():
+    urls = []
+    # Mujer pages (0 to 76)
+    for i in range(77):
+        urls.append(f"https://co.hm.com/mujer/ver-todo?category-1=mujer&category-2=ver-todo&fuzzy=0&operator=and&facets=category-1%2Ccategory-2%2Cfuzzy%2Coperator&sort=score_desc&page={i}")
+    # Hombre pages (0 to 20)
+    for i in range(21):
+        urls.append(f"https://co.hm.com/hombre/ver-todo?category-1=hombre&category-2=ver-todo&fuzzy=0&operator=and&facets=category-1%2Ccategory-2%2Cfuzzy%2Coperator&sort=score_desc&page={i}")
+    return urls
 
 def detect_dominant_color(image_bytes: bytes) -> str:
     try:
@@ -173,11 +178,11 @@ async def run_scraper():
         await context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         
         page = await context.new_page()
-        for target_url in TARGET_URLS:
+        for target_url in get_target_urls():
             try:
                 await extract_and_store_garments(page, target_url)
-                # Sleep to mimic human
-                await asyncio.sleep(2)
+                # Sleep to mimic human and avoid rate limits over 100 pages
+                await asyncio.sleep(2.5)
             except Exception as e:
                 logger.error(f"Error processing URL {target_url}: {e}")
                 
