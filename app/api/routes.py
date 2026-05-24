@@ -41,10 +41,21 @@ async def get_garments(
     result = await db.execute(stmt)
     items = result.scalars().all()
     
+    signed_items = []
+    for item in items:
+        resp = GarmentResponse.model_validate(item)
+        signed_images = []
+        for img in item.images:
+            key = img.split("/")[-1]
+            s_url = await get_presigned_url(key)
+            signed_images.append(s_url if s_url else img)
+        resp.images = signed_images
+        signed_items.append(resp)
+    
     pages = (total + size - 1) // size
     
     return PaginatedGarments(
-        items=items,
+        items=signed_items,
         total=total,
         page=page,
         size=size,
@@ -58,7 +69,16 @@ async def get_garment(garment_id: str, db: AsyncSession = Depends(get_db)):
     garment = result.scalars().first()
     if not garment:
         raise HTTPException(status_code=404, detail="Garment not found")
-    return garment
+        
+    resp = GarmentResponse.model_validate(garment)
+    signed_images = []
+    for img in garment.images:
+        key = img.split("/")[-1]
+        s_url = await get_presigned_url(key)
+        signed_images.append(s_url if s_url else img)
+    resp.images = signed_images
+    
+    return resp
 
 @router.get("/categories", response_model=List[str])
 async def get_categories(db: AsyncSession = Depends(get_db)):
