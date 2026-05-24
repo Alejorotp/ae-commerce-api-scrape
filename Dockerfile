@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
 
 # --- Production Stage ---
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
