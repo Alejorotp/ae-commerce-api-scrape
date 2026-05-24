@@ -11,6 +11,7 @@ class Garment(Base):
     category = Column(String, nullable=True)
     gender = Column(String, nullable=True)
     color = Column(String, nullable=True)
+    colorimetry = Column(String, nullable=True)
     fabric = Column(String, nullable=True)
     description = Column(String, nullable=True)
     

@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 from typing import List, Optional, Any
 from datetime import datetime
+from enum import Enum
+
+class ColorimetryEnum(str, Enum):
+    FRIO = "Frio"
+    CALIDO = "Calido"
+    NEUTRO = "Neutro"
 
 class SizeStockSchema(BaseModel):
     size: str
@@ -13,6 +19,7 @@ class GarmentBase(BaseModel):
     category: Optional[str] = None
     gender: Optional[str] = None
     color: Optional[str] = None
+    colorimetry: Optional[ColorimetryEnum] = None
     fabric: Optional[str] = None
     description: Optional[str] = None
     sizes_stock: List[SizeStockSchema] = []

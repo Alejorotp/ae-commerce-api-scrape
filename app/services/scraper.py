@@ -33,6 +33,29 @@ def detect_dominant_color(image_bytes: bytes) -> str:
         logger.error(f"Error detecting color: {e}")
         return "Unknown"
 
+def classify_colorimetry(color_str: str) -> str:
+    if not color_str or color_str == "Unknown":
+        return "Neutro"
+    c = color_str.lower()
+    
+    frio_words = ["azul", "verde", "morado", "gris", "plata", "celeste", "turquesa", "lila"]
+    calido_words = ["rojo", "naranja", "amarillo", "cafe", "marrón", "marron", "dorado", "beige", "rosa", "fucsia"]
+    
+    if any(w in c for w in frio_words): return "Frio"
+    if any(w in c for w in calido_words): return "Calido"
+    
+    if c.startswith("#") and len(c) == 7:
+        try:
+            r, g, b = int(c[1:3], 16), int(c[3:5], 16), int(c[5:7], 16)
+            if abs(r - b) < 20 and abs(r - g) < 20: return "Neutro"
+            if r > b and r > g: return "Calido"
+            if b > r and b > g: return "Frio"
+            if g > r and g > b: return "Frio"
+        except:
+            pass
+            
+    return "Neutro"
+
 async def extract_and_store_garments(page, url: str):
     logger.info(f"Navigating to {url}")
     await page.goto(url, wait_until="domcontentloaded")
@@ -121,6 +144,7 @@ async def extract_and_store_garments(page, url: str):
                 existing.sizes_stock = sizes_stock
                 existing.images = bucket_urls
                 existing.color = color
+                existing.colorimetry = classify_colorimetry(color)
             else:
                 new_garment = Garment(
                     id=gtin,
@@ -129,6 +153,7 @@ async def extract_and_store_garments(page, url: str):
                     category=category,
                     gender=gender,
                     color=color,
+                    colorimetry=classify_colorimetry(color),
                     sizes_stock=sizes_stock,
                     images=bucket_urls
                 )

@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from app.database import get_db
 from app.models import Garment
-from app.schemas import GarmentResponse, PaginatedGarments
+from app.schemas import GarmentResponse, PaginatedGarments, ColorimetryEnum
 from app.config import settings
 from app.services.scraper import run_scraper
 from app.services.storage import get_presigned_url
@@ -15,21 +15,29 @@ router = APIRouter()
 
 @router.get("/garments", response_model=PaginatedGarments)
 async def get_garments(
+    name: Optional[str] = None,
     category: Optional[str] = None,
     gender: Optional[str] = None,
     color: Optional[str] = None,
+    colorimetry: Optional[ColorimetryEnum] = None,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db)
 ):
     stmt = select(Garment)
     
+    if name:
+        # Simple stemming to catch variations like "pantalona" vs "pantalon"
+        search_term = name[:-1] if name[-1].lower() in ['a', 'o', 'e', 's'] and len(name) > 4 else name
+        stmt = stmt.where(Garment.name.ilike(f"%{search_term}%"))
     if category:
         stmt = stmt.where(Garment.category == category)
     if gender:
         stmt = stmt.where(Garment.gender == gender)
     if color:
         stmt = stmt.where(Garment.color == color)
+    if colorimetry:
+        stmt = stmt.where(Garment.colorimetry == colorimetry.value)
         
     # Count total
     count_stmt = select(func.count()).select_from(stmt.subquery())
