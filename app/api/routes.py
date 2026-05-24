@@ -9,6 +9,7 @@ from app.models import Garment
 from app.schemas import GarmentResponse, PaginatedGarments
 from app.config import settings
 from app.services.scraper import run_scraper
+from app.services.storage import get_presigned_url
 
 router = APIRouter()
 
@@ -78,4 +79,10 @@ async def trigger_scrape(background_tasks: BackgroundTasks, x_scrape_password: s
     
     background_tasks.add_task(run_scraper)
     return {"message": "Scraping process initiated in the background."}
-
+@router.get("/image-url/{image_key}")
+async def get_image_url(image_key: str):
+    """Generate a presigned URL for an image."""
+    url = await get_presigned_url(image_key)
+    if not url:
+        raise HTTPException(status_code=500, detail="Failed to generate URL")
+    return {"url": url}
